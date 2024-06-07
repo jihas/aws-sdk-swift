@@ -13,11 +13,6 @@
 import Foundation
 import PackageDescription
 
-// MARK: - Target Dependencies
-
-extension Target.Dependency {
-}
-
 // MARK: - Base Package
 
 let package = Package(
@@ -42,8 +37,7 @@ let package = Package(
         ),
         .target(
             name: "AWSClientRuntime",
-            dependencies: [
-            ],
+            dependencies: [],
             path: "./Sources/Core/AWSClientRuntime",
             resources: [
                 .copy("PrivacyInfo.xcprivacy")
@@ -51,28 +45,28 @@ let package = Package(
         ),
         .target(
             name: "AWSSDKIdentity",
-            dependencies: [.crt, .smithyIdentityAPI],
+            dependencies: [],
             path: "./Sources/Core/AWSSDKIdentity"
         ),
         .target(
             name: "AWSSDKHTTPAuth",
-            dependencies: [.crt, .clientRuntime, .smithyChecksumsAPI, "AWSSDKIdentity"],
+            dependencies: [],
             path: "./Sources/Core/AWSSDKHTTPAuth"
         ),
         .target(
             name: "AWSSDKEventStreamsAuth",
-            dependencies: [.smithyEventStreamsAPI, .smithyEventStreamsAuthAPI, .smithyEventStreams, .crt, .clientRuntime, "AWSSDKHTTPAuth"],
+            dependencies: [],
             path: "./Sources/Core/AWSSDKEventStreamsAuth"
         ),
         .testTarget(
             name: "AWSClientRuntimeTests",
-            dependencies: [.awsClientRuntime, .clientRuntime, .smithyTestUtils],
+            dependencies: ["AWSClientRuntime"],
             path: "./Tests/Core/AWSClientRuntimeTests",
             resources: [.process("Resources")]
         ),
         .testTarget(
             name: "AWSSDKHTTPAuthTests",
-            dependencies: ["AWSSDKHTTPAuth", "AWSClientRuntime", "AWSSDKEventStreamsAuth", .crt, .clientRuntime, .smithyTestUtils],
+            dependencies: ["AWSSDKHTTPAuth", "AWSClientRuntime", "AWSSDKEventStreamsAuth"],
             path: "./Tests/Core/AWSSDKHTTPAuthTests"
         ),
         .testTarget(
@@ -83,52 +77,13 @@ let package = Package(
     ]
 )
 
-// MARK: - Dependencies
-
-func addDependencies(clientRuntimeVersion: Version, crtVersion: Version) {
-    addClientRuntimeDependency(clientRuntimeVersion)
-    addCRTDependency(crtVersion)
-    addDoccDependency()
-}
-
-func addClientRuntimeDependency(_ version: Version) {
-    let smithySwiftURL = "https://github.com/smithy-lang/smithy-swift"
-    let useLocalDeps = ProcessInfo.processInfo.environment["AWS_SWIFT_SDK_USE_LOCAL_DEPS"] != nil
-    let useMainDeps = ProcessInfo.processInfo.environment["AWS_SWIFT_SDK_USE_MAIN_DEPS"] != nil
-    switch (useLocalDeps, useMainDeps) {
-    case (true, true):
-        fatalError("Unable to determine which dependencies to use. Please only specify one of AWS_SWIFT_SDK_USE_LOCAL_DEPS or AWS_SWIFT_SDK_USE_MAIN_DEPS.")
-    case (true, false):
-        package.dependencies += [
-            .package(path: "../smithy-swift")
-        ]
-    case (false, true):
-        package.dependencies += [
-            .package(url: smithySwiftURL, branch: "main")
-        ]
-    case (false, false):
-        package.dependencies += [
-            .package(url: smithySwiftURL, exact: version)
-        ]
-    }
-}
-
-func addCRTDependency(_ version: Version) {
-    package.dependencies += [
-        .package(url: "https://github.com/awslabs/aws-crt-swift", exact: version)
-    ]
-}
-
-func addDoccDependency() {
-    guard ProcessInfo.processInfo.environment["AWS_SWIFT_SDK_ENABLE_DOCC"] != nil else { return }
-    package.dependencies += [
-        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0")
-    ]
-}
-
 // MARK: - Services
 
 let serviceTargetDependencies: [Target.Dependency] = [
+    "AWSClientRuntime",
+    "AWSSDKIdentity",
+    "AWSSDKHTTPAuth",
+    "AWSSDKEventStreamsAuth",
 ]
 
 func addServiceTarget(_ name: String) {
@@ -149,7 +104,7 @@ func addServiceUnitTestTarget(_ name: String) {
     package.targets += [
         .testTarget(
             name: "\(testName)",
-            dependencies: [.crt, .clientRuntime, .awsClientRuntime, .byName(name: name), .smithyTestUtils],
+            dependencies: ["AWSClientRuntime", .byName(name: name)],
             path: "./Tests/Services/\(testName)"
         )
     ]
@@ -157,46 +112,17 @@ func addServiceUnitTestTarget(_ name: String) {
 
 func addIntegrationTestTarget(_ name: String) {
     let integrationTestName = "\(name)IntegrationTests"
-    var additionalDependencies: [String] = []
-    var exclusions: [String] = []
-    switch name {
-    case "AWSEC2":
-        additionalDependencies = ["AWSIAM", "AWSSTS", "AWSCloudWatchLogs"]
-        exclusions = [
-            "Resources/IMDSIntegTestApp"
-        ]
-    case "AWSECS":
-        additionalDependencies = ["AWSCloudWatchLogs", "AWSEC2",  "AWSIAM", "AWSSTS"]
-        exclusions = [
-            "README.md",
-            "Resources/ECSIntegTestApp/"
-        ]
-    case "AWSS3":
-        additionalDependencies = ["AWSSSOAdmin", "AWSS3Control", "AWSSTS"]
-    case "AWSEventBridge":
-        additionalDependencies = ["AWSRoute53"]
-    case "AWSCloudFrontKeyValueStore":
-        additionalDependencies = ["AWSCloudFront"]
-    case "AWSSTS":
-        additionalDependencies = ["AWSIAM", "AWSCognitoIdentity"]
-    default:
-        break
-    }
-    integrationTestServices.insert(name)
-    additionalDependencies.forEach { integrationTestServices.insert($0) }
     package.targets += [
         .testTarget(
             name: integrationTestName,
-            dependencies: [.crt, .clientRuntime, .awsClientRuntime, .byName(name: name), .smithyTestUtils] + additionalDependencies.map { Target.Dependency.target(name: $0, condition: nil) },
+            dependencies: ["AWSClientRuntime", .byName(name: name)],
             path: "./IntegrationTests/Services/\(integrationTestName)",
-            exclude: exclusions,
             resources: [.process("Resources")]
         )
     ]
 }
 
 var enabledServices = Set<String>()
-
 var enabledServiceUnitTests = Set<String>()
 
 func addAllServices() {
@@ -214,71 +140,12 @@ func excludeRuntimeUnitTests() {
     package.targets.removeAll { $0.name == "AWSClientRuntimeTests" }
 }
 
-func addProtocolTests() {
-
-    struct ProtocolTest {
-        let name: String
-        let sourcePath: String
-        let testPath: String?
-        let buildOnly: Bool
-
-        init(name: String, sourcePath: String, testPath: String? = nil, buildOnly: Bool = false) {
-            self.name = name
-            self.sourcePath = sourcePath
-            self.testPath = testPath
-            self.buildOnly = buildOnly
-        }
-    }
-
-    let baseDir = "codegen/protocol-test-codegen/build/smithyprojections/protocol-test-codegen"
-    let baseDirLocal = "codegen/protocol-test-codegen-local/build/smithyprojections/protocol-test-codegen-local"
-
-    let protocolTests: [ProtocolTest] = [
-        .init(name: "AWSRestJsonTestSDK", sourcePath: "\(baseDir)/aws-restjson"),
-        .init(name: "AWSRestJsonValidationTestSDK", sourcePath: "\(baseDir)/aws-restjson-validation"),
-        .init(name: "AWSJson1_0TestSDK", sourcePath: "\(baseDir)/aws-json-10"),
-        .init(name: "AWSJson1_1TestSDK", sourcePath: "\(baseDir)/aws-json-11"),
-        .init(name: "RestXmlTestSDK", sourcePath: "\(baseDir)/rest-xml"),
-        .init(name: "RestXmlWithNamespaceTestSDK", sourcePath: "\(baseDir)/rest-xml-xmlns"),
-        .init(name: "Ec2QueryTestSDK", sourcePath: "\(baseDir)/ec2-query"),
-        .init(name: "AWSQueryTestSDK", sourcePath: "\(baseDir)/aws-query"),
-        .init(name: "APIGatewayTestSDK", sourcePath: "\(baseDir)/apigateway"),
-        .init(name: "GlacierTestSDK", sourcePath: "\(baseDir)/glacier"),
-        .init(name: "MachineLearningTestSDK", sourcePath: "\(baseDir)/machinelearning"),
-        .init(name: "S3TestSDK", sourcePath: "\(baseDir)/s3"),
-        .init(name: "rest_json_extras", sourcePath: "\(baseDirLocal)/rest_json_extras"),
-        .init(name: "AwsQueryExtras", sourcePath: "\(baseDirLocal)/AwsQueryExtras"),
-        .init(name: "EventStream", sourcePath: "\(baseDirLocal)/EventStream", buildOnly: true),
-        .init(name: "RPCEventStream", sourcePath: "\(baseDirLocal)/RPCEventStream", buildOnly: true),
-        .init(name: "Waiters", sourcePath: "\(baseDirLocal)/Waiters", testPath: "codegen/protocol-test-codegen-local/Tests"),
-    ]
-    for protocolTest in protocolTests {
-        let target = Target.target(
-            name: protocolTest.name,
-            dependencies: serviceTargetDependencies,
-            path: "\(protocolTest.sourcePath)/swift-codegen/\(protocolTest.name)"
-        )
-        let testTarget = protocolTest.buildOnly ? nil : Target.testTarget(
-            name: "\(protocolTest.name)Tests",
-            dependencies: [.smithyTestUtils, .byNameItem(name: protocolTest.name, condition: nil)],
-            path: "\(protocolTest.testPath ?? protocolTest.sourcePath)/swift-codegen/\(protocolTest.name)Tests"
-        )
-        package.targets += [target, testTarget].compactMap { $0 }
-    }
-}
-
 func addResolvedTargets() {
     enabledServices.union(integrationTestServices).forEach(addServiceTarget)
     enabledServiceUnitTests.forEach(addServiceUnitTestTarget)
 }
 
-
 // MARK: - Generated
-
-addDependencies(
-    clientRuntimeVersion: "0.50.0",
-    crtVersion: "0.30.0"
-)
 
 // Uncomment this line to exclude runtime unit tests
 // excludeRuntimeUnitTests()
@@ -669,7 +536,7 @@ let serviceTargets: [String] = [
 ]
 
 // Uncomment this line to enable all services
-addAllServices()
+// addAllServices()
 
 let servicesWithIntegrationTests: [String] = [
     "AWSCloudFrontKeyValueStore",
