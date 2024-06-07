@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "aws-sdk-swift",
+    name: "aws-sdk-swift2",
     platforms: [
         .macOS(.v10_15),
         .iOS(.v13),
