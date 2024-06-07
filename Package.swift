@@ -13,16 +13,23 @@ let package = Package(
     products: [
         .library(name: "AWSBedrock", targets: ["AWSBedrock"]),
         .library(name: "AWSBedrockRuntime", targets: ["AWSBedrockRuntime"]),
+        .library(name: "AWSClientRuntime", targets: ["AWSClientRuntime"]),
     ],
     targets: [
         .target(
             name: "AWSBedrock",
+            dependencies: ["AWSClientRuntime"],
             path: "Sources/Services/AWSBedrock"
         ),
         .target(
             name: "AWSBedrockRuntime",
+            dependencies: ["AWSClientRuntime"],
             path: "Sources/Services/AWSBedrockRuntime"
-        )
+        ),
+        .target(
+            name: "AWSClientRuntime",
+            path: "Sources/Core/AWSClientRuntime"
+        ),
     ]
 )
 
