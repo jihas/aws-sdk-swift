@@ -14,6 +14,7 @@ let package = Package(
         .library(name: "AWSBedrock", targets: ["AWSBedrock"]),
         .library(name: "AWSBedrockRuntime", targets: ["AWSBedrockRuntime"]),
         .library(name: "AWSClientRuntime", targets: ["AWSClientRuntime"]),
+        .library(name: "AWSPinpoint", targets: ["AWSPinpoint"]),
     ],
     targets: [
         .target(
@@ -29,6 +30,11 @@ let package = Package(
         .target(
             name: "AWSClientRuntime",
             path: "Sources/Core/AWSClientRuntime"
+        ),
+        .target(
+            name: "AWSPinpoint",
+            dependencies: ["AWSClientRuntime"],
+            path: "Sources/Services/AWSPinpoint"
         ),
     ]
 )
