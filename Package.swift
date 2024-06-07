@@ -7,13 +7,8 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-// This manifest is auto-generated.  Do not commit edits to this file;
-// they will be overwritten.
-
 import Foundation
 import PackageDescription
-
-// MARK: - Base Package
 
 let package = Package(
     name: "aws-sdk-swift",
@@ -28,6 +23,8 @@ let package = Package(
         .library(name: "AWSSDKEventStreamsAuth", targets: ["AWSSDKEventStreamsAuth"]),
         .library(name: "AWSSDKIdentity", targets: ["AWSSDKIdentity"]),
         .library(name: "AWSSDKHTTPAuth", targets: ["AWSSDKHTTPAuth"]),
+        .library(name: "AWSBedrock", targets: ["AWSBedrock"]),
+        .library(name: "AWSBedrockRuntime", targets: ["AWSBedrockRuntime"]),
     ],
     targets: [
         .target(
@@ -58,6 +55,16 @@ let package = Package(
             dependencies: [],
             path: "./Sources/Core/AWSSDKEventStreamsAuth"
         ),
+        .target(
+            name: "AWSBedrock",
+            dependencies: ["AWSClientRuntime"],
+            path: "./Sources/Services/AWSBedrock"
+        ),
+        .target(
+            name: "AWSBedrockRuntime",
+            dependencies: ["AWSClientRuntime"],
+            path: "./Sources/Services/AWSBedrockRuntime"
+        ),
         .testTarget(
             name: "AWSClientRuntimeTests",
             dependencies: ["AWSClientRuntime"],
@@ -76,8 +83,6 @@ let package = Package(
         )
     ]
 )
-
-// MARK: - Services
 
 let serviceTargetDependencies: [Target.Dependency] = [
     "AWSClientRuntime",
@@ -144,11 +149,6 @@ func addResolvedTargets() {
     enabledServices.union(integrationTestServices).forEach(addServiceTarget)
     enabledServiceUnitTests.forEach(addServiceUnitTestTarget)
 }
-
-// MARK: - Generated
-
-// Uncomment this line to exclude runtime unit tests
-// excludeRuntimeUnitTests()
 
 let serviceTargets: [String] = [
     "AWSACM",
@@ -535,9 +535,6 @@ let serviceTargets: [String] = [
     "AWSXRay",
 ]
 
-// Uncomment this line to enable all services
-// addAllServices()
-
 let servicesWithIntegrationTests: [String] = [
     "AWSCloudFrontKeyValueStore",
     "AWSEC2",
@@ -552,11 +549,7 @@ let servicesWithIntegrationTests: [String] = [
     "AWSTranscribeStreaming",
 ]
 
-// Uncomment this line to enable integration tests
-// addIntegrationTests()
-
-// Uncomment this line to enable protocol tests
-// addProtocolTests()
-
+addAllServices()
+addIntegrationTests()
 addResolvedTargets()
 
