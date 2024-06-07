@@ -16,18 +16,6 @@ import PackageDescription
 // MARK: - Target Dependencies
 
 extension Target.Dependency {
-    static var awsClientRuntime: Self { "AWSClientRuntime" }
-    static var crt: Self { .product(name: "AwsCommonRuntimeKit", package: "aws-crt-swift") }
-    static var clientRuntime: Self { .product(name: "ClientRuntime", package: "smithy-swift") }
-    static var smithyRetriesAPI: Self { .product(name: "SmithyRetriesAPI", package: "smithy-swift") }
-    static var smithyRetries: Self { .product(name: "SmithyRetries", package: "smithy-swift") }
-    static var smithy: Self { .product(name: "Smithy", package: "smithy-swift") }
-    static var smithyIdentityAPI: Self { .product(name: "SmithyIdentityAPI", package: "smithy-swift") }
-    static var smithyEventStreamsAPI: Self { .product(name: "SmithyEventStreamsAPI", package: "smithy-swift") }
-    static var smithyEventStreamsAuthAPI: Self { .product(name: "SmithyEventStreamsAuthAPI", package: "smithy-swift") }
-    static var smithyEventStreams: Self { .product(name: "SmithyEventStreams", package: "smithy-swift") }
-    static var smithyChecksumsAPI: Self { .product(name: "SmithyChecksumsAPI", package: "smithy-swift") }
-    static var smithyTestUtils: Self { .product(name: "SmithyTestUtil", package: "smithy-swift") }
 }
 
 // MARK: - Base Package
@@ -55,13 +43,6 @@ let package = Package(
         .target(
             name: "AWSClientRuntime",
             dependencies: [
-                .crt,
-                .clientRuntime,
-                .smithyRetriesAPI,
-                .smithyRetries,
-                .smithyEventStreamsAPI,
-                .smithyEventStreamsAuthAPI,
-                "AWSSDKIdentity",
             ],
             path: "./Sources/Core/AWSClientRuntime",
             resources: [
@@ -148,19 +129,6 @@ func addDoccDependency() {
 // MARK: - Services
 
 let serviceTargetDependencies: [Target.Dependency] = [
-    .clientRuntime,
-    .awsClientRuntime,
-    .smithyRetriesAPI,
-    .smithyRetries,
-    .smithy,
-    .smithyIdentityAPI,
-    .smithyEventStreamsAPI,
-    .smithyEventStreamsAuthAPI,
-    .smithyEventStreams,
-    .smithyChecksumsAPI,
-    "AWSSDKIdentity",
-    "AWSSDKHTTPAuth",
-    "AWSSDKEventStreamsAuth",
 ]
 
 func addServiceTarget(_ name: String) {
